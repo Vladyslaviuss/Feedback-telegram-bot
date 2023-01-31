@@ -1,6 +1,3 @@
-# (c) Heiman Pictures
-
-
 import datetime
 
 import motor.motor_asyncio
@@ -12,9 +9,11 @@ class Database:
         self.db = self._client[database_name]
         self.col = self.db.users
 
-    def new_user(self, id):
+    def new_user(self, id, username):
         return dict(
             id=id,
+            username=username,
+            client_status="",
             join_date=datetime.date.today().isoformat(),
             notif=True,
             ban_status=dict(
@@ -25,8 +24,8 @@ class Database:
             ),
         )
 
-    async def add_user(self, id):
-        user = self.new_user(id)
+    async def add_user(self, id, username):
+        user = self.new_user(id, username)
         await self.col.insert_one(user)
 
     async def is_user_exist(self, id):
@@ -90,3 +89,14 @@ class Database:
     async def total_notif_users_count(self):
         count = await self.col.count_documents({"notif": True})
         return count
+
+    async def get_user_list(self):
+        user_list = []
+        async for user in self.col.find({}, {"username": 1, "client_status": 1, "join_date": 1}):
+            user_list.append(
+                {"username": user["username"],
+                 "client_status": user["client_status"],
+                 "join_date": user["join_date"]}
+            )
+        return user_list
+

@@ -13,10 +13,11 @@ db = Database(DB_URL, DB_NAME)
 
 async def handle_user_status(bot, cmd):
     chat_id = cmd.from_user.id
+    user_name = cmd.from_user.username
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(chat_id)
+        await db.add_user(chat_id, user_name)
         await bot.send_message(
             LOG_CHANNEL,
             f"#NEWUSER: \n\nNew User [{cmd.from_user.first_name}](tg://user?id={cmd.from_user.id}) started @{BOT_USERNAME} !!",

@@ -46,12 +46,14 @@ async def _(bot, cmd):
 # New USER notification должен отсылаться только в группу и второй месседж с DC ID c другой функции тоже
 @bot.on_message(filters.command('start') & filters.private)
 async def start(bot, message):
+    # это юзер айди, а не чат айди, потом исправить
     chat_id = message.from_user.id
+    user_name = message.from_user.username
     # Adding to DB
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(chat_id)
+        await db.add_user(id=chat_id, username=user_name)
         await bot.send_message(
             LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
@@ -99,7 +101,7 @@ async def sts(c, m):
         await m.delete()
         return
     await m.reply_text(
-        text=f"**Total Users in Database 📂:** `{await db.total_users_count()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
+        text=f"**Total Users in Database 📂:** `{await db.total_users_count()}, {await  db.get_user_list()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
         parse_mode=enums.ParseMode.MARKDOWN,
         quote=True,
     )
