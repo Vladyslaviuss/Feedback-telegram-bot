@@ -1,4 +1,3 @@
-# (c) Abir Hasan & HeimanPictures
 
 
 import asyncio

@@ -1,32 +1,8 @@
-# Copyright (c) 2021 HEIMAN PICTURES
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 import logging
-
-
 from configs import Config as C
 
-
-# LMAO, This Is Logging 
+# This Is Logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
@@ -35,25 +11,23 @@ logging.getLogger("pyrogram").setLevel(logging.WARNING)
 # from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from pyrogram.types import *
-
 from database.broadcast import broadcast
 from database.verifier import handle_user_status
 from database.database import Database
 
-LOG_CHANNEL = C.LOG_CHANNEL
+LOG_GROUP = C.LOG_GROUP
 AUTH_USERS = C.AUTH_USERS
 DB_URL = C.DB_URL
 DB_NAME = C.DB_NAME
 
 db = Database(DB_URL, DB_NAME)
 
-# Don't Change Anything, Except If You Want To Add Value
+
 bot = Client('Feedback bot',
              api_id=C.API_ID,
              api_hash=C.API_HASH,
              bot_token=C.BOT_TOKEN)
 
-donate_link=C.DONATE_LINK
 
 owner_id=C.OWNER_ID
 
@@ -63,44 +37,14 @@ IF_TEXT = "<b>Message from:</b> {}\n<b>Name:</b> {}\n\n{}"
 
 IF_CONTENT = "<b>Message from:</b> {} \n<b>Name:</b> {}"
 
-# Callback
-@bot.on_callback_query()
-async def callback_handlers(bot: Client, cb: CallbackQuery):
-    user_id = cb.from_user.id
-    if "closeMeh" in cb.data:
-        await cb.message.delete(True)
-    elif "notifon" in cb.data:
-        notif = await db.get_notif(cb.from_user.id)
-        if notif is True:
-            # 
-            await db.set_notif(user_id, notif=False)
-        else:
-            # 
-            await db.set_notif(user_id, notif=True)
-        await cb.message.edit(
-            f"`Here You Can Set Your Settings:`\n\nSuccessfully setted notifications to **{await db.get_notif(user_id)}**",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            f"NOTIFICATION  {'🔔' if ((await db.get_notif(user_id)) is True) else '🔕'}",
-                            callback_data="notifon",
-                        )
-                    ],
-                    [InlineKeyboardButton("CLOSE", callback_data="closeMeh")],
-                ]
-            ),
-        )
-        await cb.answer(
-            f"Successfully setted notifications to {await db.get_notif(user_id)}"
-        )
-        
-        
+
 @bot.on_message((filters.private | filters.group))
 async def _(bot, cmd):
     await handle_user_status(bot, cmd)
 
-@bot.on_message(filters.command('start') & (filters.private | filters.group))
+# Команда, которая оповещает о том, что кто-то нажал на старт и начал пользоваться ботом. Работает в приватке и в группе
+# New USER notification должен отсылаться только в группу и второй месседж с DC ID c другой функции тоже
+@bot.on_message(filters.command('start') & filters.private)
 async def start(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
@@ -109,11 +53,11 @@ async def start(bot, message):
         BOT_USERNAME = data.username
         await db.add_user(chat_id)
         await bot.send_message(
-            LOG_CHANNEL,
+            LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
         return
-      
+
     # 
     ban_status = await db.get_ban_status(chat_id)
     is_banned = ban_status['is_banned']
@@ -122,104 +66,20 @@ async def start(bot, message):
     if is_banned is True:
         await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
         return
-      
+
     await bot.send_message(
-        chat_id=owner_id,
-        text=LOG_TEXT.format(message.chat.id,message.chat.id,message.chat.first_name,message.chat.last_name,message.chat.dc_id),
-        parse_mode="html"
+        chat_id=-1001831216052,
+        text=f'Пользователь: {message.chat.first_name} {message.chat.last_name} / {message.chat.username} из чата {message.chat.id} только что использовал команду /start',
+        parse_mode=enums.ParseMode.HTML
     )
-    await message.reply_text(
-        text="**Hi {}!**\n".format(message.chat.first_name)+C.START,
-        reply_markup=InlineKeyboardMarkup([
-            [ InlineKeyboardButton(text="🛠SUPPORT🛠", url=f"{C.SUPPORT_GROUP}"), InlineKeyboardButton(text="📮UPDATES📮", url=f"{C.UPDATE_CHANNEL}")]
-        ])
-    )
-
-@bot.on_message(filters.command('help') & (filters.group | filters.private))
-async def help(bot, message):
-    chat_id = message.from_user.id
-    # Adding to DB
-    if not await db.is_user_exist(chat_id):
-        data = await bot.get_me()
-        BOT_USERNAME = data.username
-        await db.add_user(chat_id)
-        await bot.send_message(
-            LOG_CHANNEL,
-            f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
-        )
-    ban_status = await db.get_ban_status(chat_id)
-    is_banned = ban_status['is_banned']
-    ban_duration = ban_status['ban_duration']
-    ban_reason = ban_status['ban_reason']
-    if is_banned is True:
-        await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
-        return
-      
-    await message.reply_text(
-        text=C.HELP,
-        reply_markup=InlineKeyboardMarkup([
-            [ InlineKeyboardButton(text="🛠SUPPORT🛠", url=f"{C.SUPPORT_GROUP}"), InlineKeyboardButton(text="📮UPDATES📮", url=f"{C.UPDATE_CHANNEL}")]
-        ])
-    )
-
-
-@bot.on_message(filters.command('donate') & (filters.group | filters.private))
-async def donate(bot, message):
-    chat_id = message.from_user.id
-    # Adding to DB
-    if not await db.is_user_exist(chat_id):
-        data = await bot.get_me()
-        BOT_USERNAME = data.username
-        await db.add_user(chat_id)
-        await bot.send_message(
-            LOG_CHANNEL,
-            f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
-        )
-        
-    ban_status = await db.get_ban_status(chat_id)
-    is_banned = ban_status['is_banned']
-    ban_duration = ban_status['ban_duration']
-    ban_reason = ban_status['ban_reason']
-    if is_banned is True:
-        await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
-        return
-        
-    await message.reply_text(
-        text=C.DONATE + "If You Liked This Bot You Can Also Donate Creator through BTC `3AKE4bNwb9TsgaofLQxHAGCR9w2ftwFs2R`",
-        reply_markup=InlineKeyboardMarkup([
-            [ InlineKeyboardButton(text="DONATE", url=f"{donate_link}")]
-        ])
-    )
+    await message.reply_text(text=f"Приветствую Вас, {message.chat.first_name}! Задайте любой интересующий Вас вопрос.")
 
 
 
-@bot.on_message(filters.command("settings") & filters.private)
-async def opensettings(bot, cmd):
-    user_id = cmd.from_user.id
-    # Adding to DB
-    if not await db.is_user_exist(user_id):
-        data = await bot.get_me()
-        BOT_USERNAME = data.username
-        await db.add_user(user_id)
-        await bot.send_message(
-            LOG_CHANNEL,
-            f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
-        )
-    try:
-        await cmd.reply_text(
-            text=f"⚙ `Here You Can Set Your Settings:` ⚙\n\nSuccessfully setted notifications to **{await db.get_notif(user_id)}**",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [InlineKeyboardButton(text=f"NOTIFICATION  {'🔔' if ((await db.get_notif(user_id)) is True) else '🔕'}",callback_data="notifon")],
-                    [InlineKeyboardButton(text="CLOSE", callback_data="closeMeh")],
-                ]
-            )
-        )
-    except Exception as e:
-        await cmd.reply_text(e)
-
-
-@bot.on_message(filters.private & filters.command("broadcast"))
+# Переслать всем желаемое сообщение
+# Работает с группы
+# Фильтр только с определенной группы сделать нужно
+@bot.on_message(filters.group & filters.command("broadcast"))
 async def broadcast_handler_open(_, m):
     if m.from_user.id not in AUTH_USERS:
         await m.delete()
@@ -230,20 +90,26 @@ async def broadcast_handler_open(_, m):
     await broadcast(m, db)
 
 
-@bot.on_message((filters.group | filters.private) & filters.command("stats"))
+
+# Выводит статистку из БД
+# Фильтр только с определенной группы сделать нужно
+@bot.on_message(filters.group & filters.command("stats"))
 async def sts(c, m):
     if m.from_user.id not in AUTH_USERS:
         await m.delete()
         return
     await m.reply_text(
         text=f"**Total Users in Database 📂:** `{await db.total_users_count()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
-        parse_mode="Markdown",
+        parse_mode=enums.ParseMode.MARKDOWN,
         quote=True,
     )
 
 
-@bot.on_message(filters.private & filters.command("ban_user"))
+
+# Работает только в чате с ботом (Команда для БАНА)
+@bot.on_message(filters.group & filters.command("ban_user"))
 async def ban(c, m):
+    # только особые юзеры могут вызвать эту команду
     if m.from_user.id not in AUTH_USERS:
         await m.delete()
         return
@@ -285,6 +151,8 @@ async def ban(c, m):
         )
 
 
+
+# Работает и в приватке и в личках (Команда для АНБАНА)
 @bot.on_message((filters.group | filters.private) & filters.command("unban_user"))
 async def unban(c, m):
     if m.from_user.id not in AUTH_USERS:
@@ -320,6 +188,8 @@ async def unban(c, m):
         )
 
 
+
+# Может быть вызвана с лички с ботом и с группы админов (Команда для вывода информации о банах)
 @bot.on_message((filters.group | filters.private) & filters.command("banned_users"))
 async def _banned_usrs(c, m):
     if m.from_user.id not in AUTH_USERS:
@@ -347,8 +217,10 @@ async def _banned_usrs(c, m):
     return
 
 
-@bot.on_message((filters.group | filters.private) & filters.text)
-async def pm_text(bot, message):
+# Функция реагирует на текст и кидает его мне в приватку, чтобы я отвечал на вопрос.
+# Реагирует только на текст, полученный в боте. Не реагирует на текст с группы.
+@bot.on_message(filters.private & filters.text)
+async def receive_text_from_user(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
     if not await db.is_user_exist(chat_id):
@@ -356,7 +228,7 @@ async def pm_text(bot, message):
         BOT_USERNAME = data.username
         await db.add_user(chat_id)
         await bot.send_message(
-            LOG_CHANNEL,
+            LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
     ban_status = await db.get_ban_status(chat_id)
@@ -368,19 +240,23 @@ async def pm_text(bot, message):
         return
       
     if message.from_user.id == owner_id:
-        await reply_text(bot, message)
+        await reply_to_user_by_text(bot, message)
         return
     info = await bot.get_users(user_ids=message.from_user.id)
     reference_id = int(message.chat.id)
     await bot.send_message(
-        chat_id=owner_id,
+        chat_id=-1001831216052, # Захардкодил группу, в которую буут приходить сообщения с бота
         text=IF_TEXT.format(reference_id, info.first_name, message.text),
-        parse_mode="html"
+        parse_mode=enums.ParseMode.HTML
+
     )
 
 
-@bot.on_message((filters.group | filters.private) & filters.media)
-async def pm_media(bot, message):
+# Функция реагирует на медиа и кидает его мне в приватку, чтобы я отвечал на вопрос.
+# Баги - Я отвечаю любым видом сообщения и оно работает, но есть пользователь скидывает мне стикер - я не вижу от кого. Вижу аудио, видео, емодзи
+# Если пользователь скидывает мне реакцию, я вижу просто пересланное мной же сообщение
+@bot.on_message(filters.private & filters.media)
+async def receive_media_from_user(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
     if not await db.is_user_exist(chat_id):
@@ -388,7 +264,7 @@ async def pm_media(bot, message):
         BOT_USERNAME = data.username
         await db.add_user(chat_id)
         await bot.send_message(
-            LOG_CHANNEL,
+            LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
     ban_status = await db.get_ban_status(chat_id)
@@ -398,23 +274,25 @@ async def pm_media(bot, message):
     if is_banned is True:
         await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
         return
-      
+
     if message.from_user.id == owner_id:
-        await replay_media(bot, message)
+        await replay_to_user_by_media(bot, message)
         return
     info = await bot.get_users(user_ids=message.from_user.id)
     reference_id = int(message.chat.id)
     await bot.copy_message(
-        chat_id=owner_id,
+        chat_id=-1001831216052,
         from_chat_id=message.chat.id,
-        message_id=message.message_id,
+        message_id=message.id,
         caption=IF_CONTENT.format(reference_id, info.first_name),
-        parse_mode="html"
+        parse_mode=enums.ParseMode.HTML
     )
 
 
+
+
 @bot.on_message(filters.user(owner_id) & filters.text)
-async def reply_text(bot, message):
+async def reply_to_user_by_text(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
     if not await db.is_user_exist(chat_id):
@@ -422,7 +300,7 @@ async def reply_text(bot, message):
         BOT_USERNAME = data.username
         await db.add_user(chat_id)
         await bot.send_message(
-            LOG_CHANNEL,
+            LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
     
@@ -445,8 +323,9 @@ async def reply_text(bot, message):
         )
 
 
+# Поменять, чтоб не только овнер мог отвечать
 @bot.on_message(filters.user(owner_id) & filters.media)
-async def replay_media(bot, message):
+async def replay_to_user_by_media(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
     if not await db.is_user_exist(chat_id):
@@ -454,7 +333,7 @@ async def replay_media(bot, message):
         BOT_USERNAME = data.username
         await db.add_user(chat_id)
         await bot.send_message(
-            LOG_CHANNEL,
+            LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
     reference_id = True
@@ -471,8 +350,9 @@ async def replay_media(bot, message):
         await bot.copy_message(
             chat_id=int(reference_id),
             from_chat_id=message.chat.id,
-            message_id=message.message_id,
-            parse_mode="html"
+            message_id=message.id,
+            parse_mode=enums.ParseMode.HTML
         )
+
 
 bot.run()

@@ -2,33 +2,24 @@ import os
 
 class Config(object):
 
-    API_ID = int(os.environ.get("API_ID", 12345))
+    API_ID = int(os.environ.get("API_ID", 20960655))
 
-    API_HASH = str(os.environ.get("API_HASH", ""))
+    API_HASH = str(os.environ.get("API_HASH", "0266b63175fe226f5b9caa12d9c91003"))
 
-    BOT_TOKEN = str(os.environ.get("BOT_TOKEN", ""))
+    BOT_TOKEN = str(os.environ.get("BOT_TOKEN", "5963630341:AAHkLqm76c4Iqp-A3UrVSSdRN3FNw8V_x38"))
     
-    OWNER_ID = int(os.environ.get("OWNER_ID", 1428968542))
+    OWNER_ID = int(os.environ.get("OWNER_ID", 284134017))
 
-    AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "").split())
+    AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "284134017").split())
 
-    START = str(os.environ.get("START_TEXT", ""))
 
-    HELP = str(os.environ.get("HELP_TEXT", ""))
+    # SUPPORT_GROUP = str(os.environ.get("SUPPORT_GROUP", "https://t.me/+i_RT6WI3YnxjMDZi"))
 
-    DONATE = str(os.environ.get("DONATE_TEXT", ""))
-
-    DONATE_LINK = str(os.environ.get("DONATE_LINK", ""))
-
-    UPDATE_CHANNEL = str(os.environ.get("UPDATE_CHANNEL", ""))
-
-    SUPPORT_GROUP = str(os.environ.get("SUPPORT_GROUP", ""))
-
-    DB_URL = str(os.environ.get("DB_URL", ""))
+    DB_URL = str(os.environ.get("DB_URL", "mongodb+srv://thoughtsstream:Selfdevelop8@cluster0.vvwwadh.mongodb.net/?retryWrites=true&w=majority"))
     
-    DB_NAME = str(os.environ.get("DB_NAME", ""))
+    DB_NAME = str(os.environ.get("DB_NAME", "vladyslavius"))
     
-    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", ""))
+    LOG_GROUP = int(os.environ.get("LOG_GROUP", "-1001831216052"))
 
     BROADCAST_AS_COPY = bool(os.environ.get("BROADCAST_AS_COPY", True))
 

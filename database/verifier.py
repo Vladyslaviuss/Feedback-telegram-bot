@@ -6,7 +6,7 @@ from database.database import Database
 
 DB_URL = Config.DB_URL
 DB_NAME = Config.DB_NAME
-LOG_CHANNEL = Config.LOG_CHANNEL
+LOG_CHANNEL = Config.LOG_GROUP
 
 db = Database(DB_URL, DB_NAME)
 
