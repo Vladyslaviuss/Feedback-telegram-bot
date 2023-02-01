@@ -101,7 +101,7 @@ async def sts(c, m):
         await m.delete()
         return
     await m.reply_text(
-        text=f"**Total Users in Database 📂:** `{await db.total_users_count()}, \n{await  db.get_user_list()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
+        text=f"**Total Users in Database 📂:** `{await db.total_users_count()}\n \n{await  db.get_user_list()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
         parse_mode=enums.ParseMode.HTML,
         quote=True,
     )
@@ -251,7 +251,6 @@ async def receive_text_from_user(bot, message):
         chat_id=-1001831216052, # Захардкодил группу, в которую буут приходить сообщения с бота
         text=IF_TEXT.format(reference_id, info.first_name, message.text),
         parse_mode=enums.ParseMode.HTML
-
     )
 
 
@@ -284,12 +283,17 @@ async def receive_media_from_user(bot, message):
         return
     info = await bot.get_users(user_ids=message.from_user.id)
     reference_id = int(message.chat.id)
-    await bot.copy_message(
+    # await bot.copy_message(
+    #     chat_id=-1001831216052,
+    #     from_chat_id=message.chat.id,
+    #     message_id=message.id,
+    #     caption=IF_CONTENT.format(reference_id, info.first_name),
+    #     parse_mode=enums.ParseMode.HTML
+    # )
+    await bot.forward_messages(
         chat_id=-1001831216052,
         from_chat_id=message.chat.id,
-        message_id=message.id,
-        caption=IF_CONTENT.format(reference_id, info.first_name),
-        parse_mode=enums.ParseMode.HTML
+        message_ids=message.id,
     )
 
 
