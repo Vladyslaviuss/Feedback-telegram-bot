@@ -90,13 +90,27 @@ class Database:
         count = await self.col.count_documents({"notif": True})
         return count
 
+    # async def get_user_list(self):
+    #     user_list = []
+    #     async for user in self.col.find({}, {"username": 1, "client_status": 1, "join_date": 1}):
+    #         user_list.append(
+    #             {"username": user["username"],
+    #              "client_status": user["client_status"],
+    #              "join_date": user["join_date"]}
+    #         )
+    #     return user_list
+
+    # async def get_user_list(self):
+    #     users = []
+    #     async for user in self.col.find({}):
+    #         users.append(f"@{user['username']} - {user.get('client_status', '')} - {user['join_date']}")
+    #     return '\n'.join(users)
+
     async def get_user_list(self):
-        user_list = []
-        async for user in self.col.find({}, {"username": 1, "client_status": 1, "join_date": 1}):
-            user_list.append(
-                {"username": user["username"],
-                 "client_status": user["client_status"],
-                 "join_date": user["join_date"]}
-            )
-        return user_list
+        users = []
+        async for user in self.col.find({}):
+            users.append(
+                f"{len(users) + 1}. @{user['username']} - {user.get('client_status', '')} - {user['join_date']}")
+        return '\n'.join(users)
+
 

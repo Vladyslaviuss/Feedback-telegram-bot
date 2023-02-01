@@ -47,13 +47,13 @@ async def _(bot, cmd):
 @bot.on_message(filters.command('start') & filters.private)
 async def start(bot, message):
     # это юзер айди, а не чат айди, потом исправить
-    chat_id = message.from_user.id
+    user_id = message.from_user.id
     user_name = message.from_user.username
     # Adding to DB
-    if not await db.is_user_exist(chat_id):
+    if not await db.is_user_exist(user_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(id=chat_id, username=user_name)
+        await db.add_user(id=user_id, username=user_name)
         await bot.send_message(
             LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
@@ -61,7 +61,7 @@ async def start(bot, message):
         return
 
     # 
-    ban_status = await db.get_ban_status(chat_id)
+    ban_status = await db.get_ban_status(user_id)
     is_banned = ban_status['is_banned']
     ban_duration = ban_status['ban_duration']
     ban_reason = ban_status['ban_reason']
@@ -101,8 +101,8 @@ async def sts(c, m):
         await m.delete()
         return
     await m.reply_text(
-        text=f"**Total Users in Database 📂:** `{await db.total_users_count()}, {await  db.get_user_list()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
-        parse_mode=enums.ParseMode.MARKDOWN,
+        text=f"**Total Users in Database 📂:** `{await db.total_users_count()}, \n{await  db.get_user_list()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
+        parse_mode=enums.ParseMode.HTML,
         quote=True,
     )
 
@@ -223,17 +223,18 @@ async def _banned_usrs(c, m):
 # Реагирует только на текст, полученный в боте. Не реагирует на текст с группы.
 @bot.on_message(filters.private & filters.text)
 async def receive_text_from_user(bot, message):
-    chat_id = message.from_user.id
+    user_id = message.from_user.id
+    user_name = message.from_user.username
     # Adding to DB
-    if not await db.is_user_exist(chat_id):
+    if not await db.is_user_exist(user_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(chat_id)
+        await db.add_user(id=user_id, username=user_name)
         await bot.send_message(
             LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
-    ban_status = await db.get_ban_status(chat_id)
+    ban_status = await db.get_ban_status(user_id)
     is_banned = ban_status['is_banned']
     ban_duration = ban_status['ban_duration']
     ban_reason = ban_status['ban_reason']
@@ -259,17 +260,18 @@ async def receive_text_from_user(bot, message):
 # Если пользователь скидывает мне реакцию, я вижу просто пересланное мной же сообщение
 @bot.on_message(filters.private & filters.media)
 async def receive_media_from_user(bot, message):
-    chat_id = message.from_user.id
+    user_id = message.from_user.id
+    user_name = message.from_user.username
     # Adding to DB
-    if not await db.is_user_exist(chat_id):
+    if not await db.is_user_exist(user_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(chat_id)
+        await db.add_user(id=user_id, username=user_name)
         await bot.send_message(
             LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
-    ban_status = await db.get_ban_status(chat_id)
+    ban_status = await db.get_ban_status(user_id)
     is_banned = ban_status['is_banned']
     ban_duration = ban_status['ban_duration']
     ban_reason = ban_status['ban_reason']
@@ -295,12 +297,13 @@ async def receive_media_from_user(bot, message):
 
 @bot.on_message(filters.user(owner_id) & filters.text)
 async def reply_to_user_by_text(bot, message):
-    chat_id = message.from_user.id
+    user_id = message.from_user.id
+    user_name = message.from_user.username
     # Adding to DB
-    if not await db.is_user_exist(chat_id):
+    if not await db.is_user_exist(user_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(chat_id)
+        await db.add_user(id=user_id, username=user_name)
         await bot.send_message(
             LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
@@ -328,12 +331,13 @@ async def reply_to_user_by_text(bot, message):
 # Поменять, чтоб не только овнер мог отвечать
 @bot.on_message(filters.user(owner_id) & filters.media)
 async def replay_to_user_by_media(bot, message):
-    chat_id = message.from_user.id
+    user_id = message.from_user.id
+    user_name = message.from_user.username
     # Adding to DB
-    if not await db.is_user_exist(chat_id):
+    if not await db.is_user_exist(user_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
-        await db.add_user(chat_id)
+        await db.add_user(id=user_id, username=user_name)
         await bot.send_message(
             LOG_GROUP,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
