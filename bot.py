@@ -106,6 +106,35 @@ async def sts(c, m):
         quote=True,
     )
 
+@bot.on_message(filters.group & filters.command("set_status_to"))
+async def set_status(c, m):
+    if m.from_user.id not in AUTH_USERS:
+        await m.delete()
+        return
+    if len(m.command) < 2:
+        await m.reply_text(
+            f"Неправильное использование команды!!.",
+            quote=True,
+        )
+        return
+    try:
+        user_name = str(m.command[1])
+        status = " ".join(m.command[2:])
+        # ban_reason = " ".join(m.command[3:])
+        ban_log_text = f"Setting status {status} for user @{user_name}"
+
+        # if user_id == owner_id:
+        #     await message.reply_text("**You can Ban The Owner Vro")
+        #     return
+        k = await db.set_client_status(username=user_name, client_status=status)
+        if k == True:
+            await m.reply_text(f"СТАТУС УСПЕШНО ЗАДАН!!.", quote=True)
+        else:
+            await m.reply_text(f"СТАТУС НЕ ЗАДАН ЧЕРЕЗ ОШИБКУ В БД!!.", quote=True)
+    except Exception:
+        await m.reply_text(f"Другая ошибка случилась", quote=True)
+
+
 
 
 # Работает только в чате с ботом (Команда для БАНА)
@@ -247,10 +276,15 @@ async def receive_text_from_user(bot, message):
         return
     info = await bot.get_users(user_ids=message.from_user.id)
     reference_id = int(message.chat.id)
-    await bot.send_message(
-        chat_id=-1001831216052, # Захардкодил группу, в которую буут приходить сообщения с бота
-        text=IF_TEXT.format(reference_id, info.first_name, message.text),
-        parse_mode=enums.ParseMode.HTML
+    # await bot.send_message(
+    #     chat_id=-1001831216052, # Захардкодил группу, в которую буут приходить сообщения с бота
+    #     text=IF_TEXT.format(reference_id, info.first_name, message.text),
+    #     parse_mode=enums.ParseMode.HTML
+    # )
+    await bot.forward_messages(
+        chat_id=-1001831216052,
+        from_chat_id=message.chat.id,
+        message_ids=message.id,
     )
 
 
@@ -325,7 +359,7 @@ async def reply_to_user_by_text(bot, message):
         except Exception:
             pass
         await bot.send_message(
-            chat_id=int(reference_id),
+            chat_id=message.reply_to_message.forward_from.id,
             #from_chat_id=message.chat.id,
             #message_id=message.message_id,
             text=message.text
@@ -358,7 +392,7 @@ async def replay_to_user_by_media(bot, message):
         except Exception:
             pass
         await bot.copy_message(
-            chat_id=int(reference_id),
+            chat_id=message.reply_to_message.forward_from.id,
             from_chat_id=message.chat.id,
             message_id=message.id,
             parse_mode=enums.ParseMode.HTML

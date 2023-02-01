@@ -98,4 +98,13 @@ class Database:
                 f"{len(users) + 1}. @{user['username']} - {user.get('client_status', '')} - {user['join_date']}")
         return '\n'.join(users)
 
+    async def set_client_status(self, username, client_status):
+        result = await self.col.update_one(
+            {'username': username},
+            {'$set': {'client_status': client_status}}
+        )
+        if result.modified_count:
+            return True
+        return False
+
 
