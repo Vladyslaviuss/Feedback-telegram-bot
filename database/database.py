@@ -95,7 +95,7 @@ class Database:
         users = []
         async for user in self.col.find({}):
             users.append(
-                f"{len(users) + 1}. @{user['username']} - {user.get('client_status', '')} - {user['join_date']}")
+                f"{len(users) + 1}. {user['id']} - @{user['username']} - {user.get('client_status', '')} - {user['join_date']}")
         return '\n'.join(users)
 
     async def set_client_status(self, username, client_status):

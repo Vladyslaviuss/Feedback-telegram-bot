@@ -10,16 +10,14 @@ class Config(object):
     
     OWNER_ID = int(os.environ.get("OWNER_ID", 284134017))
 
-    AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "284134017").split())
-
-
-    # SUPPORT_GROUP = str(os.environ.get("SUPPORT_GROUP", "https://t.me/+i_RT6WI3YnxjMDZi"))
-
     DB_URL = str(os.environ.get("DB_URL", "mongodb+srv://thoughtsstream:Selfdevelop8@cluster0.vvwwadh.mongodb.net/?retryWrites=true&w=majority"))
     
     DB_NAME = str(os.environ.get("DB_NAME", "vladyslavius"))
     
-    LOG_GROUP = int(os.environ.get("LOG_GROUP", "-1001831216052"))
+    # LOG_GROUP = int(os.environ.get("LOG_GROUP", "-882487827"))
+
+    LOG_GROUP = int(os.environ.get("LOG_GROUP", "-805783554")) # Main group
 
     BROADCAST_AS_COPY = bool(os.environ.get("BROADCAST_AS_COPY", True))
+
 
