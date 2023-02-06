@@ -14,9 +14,9 @@ class Config(object):
     
     DB_NAME = str(os.environ.get("DB_NAME", "vladyslavius"))
     
-    # LOG_GROUP = int(os.environ.get("LOG_GROUP", "-882487827"))
+    LOG_GROUP = int(os.environ.get("LOG_GROUP", "-882487827"))
 
-    LOG_GROUP = int(os.environ.get("LOG_GROUP", "-805783554")) # Main group
+    # LOG_GROUP = int(os.environ.get("LOG_GROUP", "-805783554")) # Main group
 
     BROADCAST_AS_COPY = bool(os.environ.get("BROADCAST_AS_COPY", True))
 

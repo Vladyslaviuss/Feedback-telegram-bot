@@ -1,4 +1,6 @@
 # import traceback
+import traceback
+
 from pyrogram import Client, filters, enums
 import logging
 from configs import Config as C
@@ -25,15 +27,12 @@ bot = Client('Feedback bot',
 
 owner_id=C.OWNER_ID
 
-LOG_TEXT = "ID: <code>{}</code>\nFirst Name: <a href='tg://user?id={}'>{}{}</a>\nDC ID: <code>{}</code>"
-
 IF_TEXT = "<b>Message from:</b> {}\n<b>Name:</b> {}\n\n{}"
 
 IF_CONTENT = "<b>Message from:</b> {} \n<b>Name:</b> {}"
 
 @bot.on_message(filters.command('start') & filters.private)
 async def start(bot, message):
-    # это юзер айди, а не чат айди, потом исправить
     user_id = message.from_user.id
     user_name = message.from_user.username
     # Adding to DB
@@ -280,11 +279,18 @@ async def reply_to_user_by_text(bot, message):
             reference_id = file.caption.split()[2]
         except Exception:
             pass
-        await bot.send_message(
-            chat_id=int(reference_id),
-            text=message.text
-        )
-
+        if message.reply_to_message.from_user.is_bot == True:
+            try:
+                await bot.send_message(
+                    chat_id=int(reference_id),
+                    text=message.text
+                )
+            except ValueError:
+                await message.reply('`You`re trying to respond to Notification message. Please reply only to user`s messages`')
+            except Exception:
+                await message.reply('`Please do not respond to the stickers of video. Respond to the text above.`')
+        else:
+            pass
 
 @bot.on_message(filters.group & filters.media & filters.chat(LOG_GROUP))
 async def replay_to_user_by_media(bot, message):
@@ -299,11 +305,20 @@ async def replay_to_user_by_media(bot, message):
             reference_id = file.caption.split()[2]
         except Exception:
             pass
-        await bot.copy_message(
-            chat_id=int(reference_id),
-            from_chat_id=message.chat.id,
-            message_id=message.id,
-            parse_mode=enums.ParseMode.HTML
-        )
+        if message.reply_to_message.from_user.is_bot == True:
+            try:
+                await bot.copy_message(
+                    chat_id=int(reference_id),
+                    from_chat_id=message.chat.id,
+                    message_id=message.id,
+                    parse_mode=enums.ParseMode.HTML
+                )
+            except ValueError:
+                await message.reply(
+                    '`You`re trying to respond to Notification message. Please reply only to user`s messages`')
+            except Exception:
+                await message.reply('`Please do not respond to the stickers of video. Respond to the text above.`')
+        else:
+            pass
 
 bot.run()
