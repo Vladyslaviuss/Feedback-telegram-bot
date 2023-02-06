@@ -1,6 +1,3 @@
-# import traceback
-import traceback
-
 from pyrogram import Client, filters, enums
 import logging
 from configs import Config as C
@@ -87,28 +84,26 @@ async def sts(c, m):
 async def set_status(c, m):
     if len(m.command) < 2:
         await m.reply_text(
-            f"Wrong usage of command! 🛑",
+            f"`Wrong usage of command! 🛑 \n\nUsage:\n\n`/set_status_to` user_name desired_status\n\nEg: `/set_status_to` Evgeniy4544 Клиент думает.\n This will set a status for user `@Evgeniy4544` - 'Клиент думает'.`",
             quote=True,
         )
         return
     try:
         user_name = str(m.command[1])
         status = " ".join(m.command[2:])
-        ban_log_text = f"Setting status {status} for user @{user_name}"
-
         k = await db.set_client_status(username=user_name, client_status=status)
         if k == True:
             await m.reply_text(f"Successfully set status: '{status}' for user: @{user_name}", quote=True)
         else:
-            await m.reply_text(f"Failed to set a status for user @{user_name}", quote=True)
+            await m.reply_text(f"`Failed to set a status for user `@{user_name}`. Probably this user not in your DB.`", quote=True)
     except Exception:
-        await m.reply_text(f"Oops... Some error occured.", quote=True)
+        await m.reply_text(f"`Oops... Some error occured. Try again`", quote=True)
 
 
 
 @bot.on_message(filters.group & filters.command("ban_user") & filters.chat(LOG_GROUP))
 async def ban(c, m):
-    if len(m.command) == 1:
+    if len(m.command) < 3:
         await m.reply_text(
             f"Use this command to ban 🛑 any user from the bot 🤖.\n\nUsage:\n\n`/ban_user user_id ban_duration ban_reason`\n\nEg: `/ban_user 1234567 28 You misused me.`\n This will ban user with id `1234567` for `28` days for the reason `You misused me`.",
             quote=True,
@@ -124,53 +119,55 @@ async def ban(c, m):
         try:
             await c.send_message(
                 user_id,
-                f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**",
+                f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin**",
             )
             ban_log_text += "\n\nUser notified successfully!"
-        except BaseException:
-            traceback.print_exc()
-            ban_log_text += (
-                f"\n\n ⚠️ User notification failed! ⚠️ \n\n`{traceback.format_exc()}`"
+            await m.reply_text(f'{ban_log_text}')
+        except Exception:
+            await m.reply_text(
+                f"`⚠️ User ban & notification failed! ⚠ Most probably this user doesn't use your bot or doesn't exist.️` "
             )
         await db.ban_user(user_id, ban_duration, ban_reason)
-        print(ban_log_text)
-        await m.reply_text(ban_log_text, quote=True)
-    except BaseException:
-        traceback.print_exc()
+    except KeyError:
         await m.reply_text(
-            f"Error occoured ⚠️! Traceback given below\n\n`{traceback.format_exc()}`",
+            f"`Error occured ⚠️!Most probably this user doesn't use your bot or doesn't exist`",
+            quote=True,
+        )
+    except ValueError:
+        await m.reply_text(
+            f"`Woow.. Looks like you're typing letters instead of numbers in user's id / duration.`",
+            quote=True,
+        )
+    except Exception:
+        await m.reply_text(
+            f"`Some unexpected error occured. Please try again.`",
             quote=True,
         )
 
 
 @bot.on_message(filters.group & filters.command("unban_user") & filters.chat(LOG_GROUP))
 async def unban(c, m):
-    if len(m.command) == 1:
+    if len(m.command) < 2 or len(m.command) > 2:
         await m.reply_text(
             f"Use this command to unban 😃 any user.\n\nUsage:\n\n`/unban_user user_id`\n\nEg: `/unban_user 1234567`\n This will unban user with id `1234567`.",
             quote=True,
         )
         return
-
     try:
         user_id = int(m.command[1])
-        unban_log_text = f"Unbanning user 🤪 {user_id}"
-
+        unban_log_text = f"Unbanning user: {user_id}"
         try:
             await c.send_message(user_id, f"Your ban was lifted!")
             unban_log_text += "\n\n✅ User notified successfully! ✅"
-        except BaseException:
-            traceback.print_exc()
+        except Exception:
             unban_log_text += (
-                f"\n\n⚠️ User notification failed! ⚠️\n\n`{traceback.format_exc()}`"
+                f"\n\n⚠️ User unban & notification failed! Most probably this user not in your DB or doesn't exist. ⚠️\n\n"
             )
         await db.remove_ban(user_id)
-        print(unban_log_text)
         await m.reply_text(unban_log_text, quote=True)
-    except BaseException:
-        traceback.print_exc()
+    except Exception:
         await m.reply_text(
-            f"⚠️ Error occoured ⚠️! Traceback given below\n\n`{traceback.format_exc()}`",
+            f"`Please enter user's id as numbers, not a symbols or letters.`",
             quote=True,
         )
 
@@ -286,7 +283,7 @@ async def reply_to_user_by_text(bot, message):
                     text=message.text
                 )
             except ValueError:
-                await message.reply('`You`re trying to respond to Notification message. Please reply only to user`s messages`')
+                await message.reply("`You're trying to respond to Notification message. Please reply only to user's messages`")
             except Exception:
                 await message.reply('`Please do not respond to the stickers of video. Respond to the text above.`')
         else:
